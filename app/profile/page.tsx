@@ -1,95 +1,86 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { UserCircle, Mail, Phone, MapPin, Globe, Save } from 'lucide-react'
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { Database } from "@/lib/database.types";
+import { UserCircle, Mail, Phone, MapPin, Globe, Save } from "lucide-react";
 
 interface Profile {
-  id: string
-  full_name: string | null
-  email: string | null
-  phone: string | null
-  role: 'client' | 'coach' | 'doctor' | 'admin'
-  bio: string | null
-  specialization: string | null
-  timezone: string
-  locale: string
-  avatar_url: string | null
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+  role: "client" | "coach" | "doctor" | "admin";
+  bio: string | null;
+  specialization: string | null;
+  timezone: string;
+  locale: string;
+  avatar_url: string | null;
 }
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchProfile()
-  }, [])
+    fetchProfile();
+  }, []);
 
   async function fetchProfile() {
     try {
-      const userId = 'demo-user-id'
+      const userId = "11111111-1111-1111-1111-111111111008";
 
       const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
 
-      setProfile(data)
+      setProfile(data);
     } catch (error) {
-      console.error('Error fetching profile:', error)
+      console.error("Error fetching profile:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   async function handleSave() {
-    if (!profile) return
+    if (!profile) return;
 
-    setSaving(true)
+    setSaving(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: profile.full_name,
-          email: profile.email,
-          phone: profile.phone,
-          bio: profile.bio,
-          specialization: profile.specialization,
-          timezone: profile.timezone,
-          locale: profile.locale,
-        })
-        .eq('id', profile.id)
+      const updateData: Database["public"]["Tables"]["profiles"]["Update"] = {
+        full_name: profile.full_name,
+        email: profile.email,
+        phone: profile.phone,
+        bio: profile.bio,
+        specialization: profile.specialization,
+        timezone: profile.timezone,
+        locale: profile.locale,
+      };
 
-      if (error) throw error
-      alert('Profile updated successfully!')
+      const { error } = await supabase
+        .from("profiles")
+        .update(updateData as never)
+        .eq("id", profile.id);
+
+      if (error) throw error;
+      alert("Profile updated successfully!");
     } catch (error) {
-      console.error('Error updating profile:', error)
-      alert('Failed to update profile')
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile");
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
   }
 
   if (loading) {
-    return (
-      <div className="p-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Loading profile...</div>
-        </div>
-      </div>
-    )
+    return <div className="text-center py-8">Loading...</div>;
   }
 
   if (!profile) {
-    return (
-      <div className="p-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <p className="text-red-800">Error loading profile</p>
-        </div>
-      </div>
-    )
+    return <div className="text-center py-8">Profile not found.</div>;
   }
 
   return (
@@ -106,7 +97,7 @@ export default function ProfilePage() {
           </div>
           <div>
             <h2 className="text-2xl font-semibold text-gray-900">
-              {profile.full_name || 'Unnamed User'}
+              {profile.full_name || "Unnamed User"}
             </h2>
             <p className="text-gray-600 capitalize">{profile.role} Account</p>
           </div>
@@ -119,8 +110,10 @@ export default function ProfilePage() {
             </label>
             <input
               type="text"
-              value={profile.full_name || ''}
-              onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+              value={profile.full_name || ""}
+              onChange={(e) =>
+                setProfile({ ...profile, full_name: e.target.value })
+              }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -132,8 +125,10 @@ export default function ProfilePage() {
             </label>
             <input
               type="email"
-              value={profile.email || ''}
-              onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+              value={profile.email || ""}
+              onChange={(e) =>
+                setProfile({ ...profile, email: e.target.value })
+              }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -145,8 +140,10 @@ export default function ProfilePage() {
             </label>
             <input
               type="tel"
-              value={profile.phone || ''}
-              onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+              value={profile.phone || ""}
+              onChange={(e) =>
+                setProfile({ ...profile, phone: e.target.value })
+              }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -156,7 +153,7 @@ export default function ProfilePage() {
               Bio
             </label>
             <textarea
-              value={profile.bio || ''}
+              value={profile.bio || ""}
               onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
               rows={4}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -164,15 +161,17 @@ export default function ProfilePage() {
             />
           </div>
 
-          {(profile.role === 'coach' || profile.role === 'doctor') && (
+          {(profile.role === "coach" || profile.role === "doctor") && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Specialization
               </label>
               <input
                 type="text"
-                value={profile.specialization || ''}
-                onChange={(e) => setProfile({ ...profile, specialization: e.target.value })}
+                value={profile.specialization || ""}
+                onChange={(e) =>
+                  setProfile({ ...profile, specialization: e.target.value })
+                }
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="e.g., Fertility Nutrition, IVF Specialist"
               />
@@ -187,9 +186,10 @@ export default function ProfilePage() {
               </label>
               <select
                 value={profile.timezone}
-                onChange={(e) => setProfile({ ...profile, timezone: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
+                onChange={(e) =>
+                  setProfile({ ...profile, timezone: e.target.value })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="UTC">UTC</option>
                 <option value="America/New_York">Eastern Time</option>
                 <option value="America/Chicago">Central Time</option>
@@ -207,9 +207,10 @@ export default function ProfilePage() {
               </label>
               <select
                 value={profile.locale}
-                onChange={(e) => setProfile({ ...profile, locale: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
+                onChange={(e) =>
+                  setProfile({ ...profile, locale: e.target.value })
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="en">English</option>
                 <option value="es">Español</option>
                 <option value="fr">Français</option>
@@ -222,14 +223,13 @@ export default function ProfilePage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
               <Save size={20} />
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

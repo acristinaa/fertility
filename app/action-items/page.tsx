@@ -27,7 +27,7 @@ export default function ActionItemsPage() {
 
   async function fetchActionItems() {
     try {
-      const userId = 'demo-user-id'
+      const userId = '11111111-1111-1111-1111-111111111008'
 
       let query = supabase
         .from('action_items')
@@ -51,26 +51,22 @@ export default function ActionItemsPage() {
       const { data } = await query
 
       setActionItems(
-        (data || []).map((a: any) => ({
-          ...a,
-          goal_title: a.goal?.title || null,
-        }))
+        ((data as ActionItem[]) || []).map((a) : ActionItem => ({
+          id: a.id,
+          title: a.title,
+          description: a.description,
+          status: a.status,
+          due_date: a.due_date,
+          created_at: a.created_at,
+          session_id: a.session_id,
+          goal_title: a.goal_title,
+        })) as ActionItem[]
       )
     } catch (error) {
       console.error('Error fetching action items:', error)
     } finally {
       setLoading(false)
     }
-  }
-
-  if (loading) {
-    return (
-      <div className="p-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Loading action items...</div>
-        </div>
-      </div>
-    )
   }
 
   const pendingCount = actionItems.filter((a) => a.status === 'open' || a.status === 'in_progress').length

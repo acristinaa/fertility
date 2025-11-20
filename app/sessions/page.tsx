@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { Calendar, Clock, Video, MapPin, Plus, Filter } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 
-interface Session {
+interface SessionWithProvider {
   id: number
   scheduled_at: string
   duration_minutes: number
@@ -18,7 +18,7 @@ interface Session {
 }
 
 export default function SessionsPage() {
-  const [sessions, setSessions] = useState<Session[]>([])
+  const [sessions, setSessions] = useState<SessionWithProvider[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'scheduled' | 'completed' | 'canceled'>('all')
 
@@ -28,7 +28,7 @@ export default function SessionsPage() {
 
   async function fetchSessions() {
     try {
-      const userId = 'demo-user-id'
+      const userId = '11111111-1111-1111-1111-111111111008'
 
       let query = supabase
         .from('sessions')
@@ -53,28 +53,24 @@ export default function SessionsPage() {
       const { data } = await query
 
       setSessions(
-        (data || []).map((s: any) => ({
-          ...s,
-          provider_name: s.provider?.full_name || null,
-        }))
-      )
+        ((data as SessionWithProvider[]) || []).map((s) => ({
+          id: s.id,
+          scheduled_at: s.scheduled_at,
+          duration_minutes: s.duration_minutes,
+          status: s.status,
+          session_type: s.session_type,
+          mode: s.mode,
+          provider_type: s.provider_type,
+          client_rating: s.client_rating,
+          provider_name: s.provider_name,
+        })) as SessionWithProvider[]
+      );
     } catch (error) {
-      console.error('Error fetching sessions:', error)
+      console.error("Error fetching sessions:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
-
-  if (loading) {
-    return (
-      <div className="p-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Loading sessions...</div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
@@ -135,7 +131,7 @@ export default function SessionsPage() {
   )
 }
 
-function SessionCard({ session }: { session: Session }) {
+function SessionCard({ session }: { session: SessionWithProvider }) {
   const statusColors = {
     scheduled: 'bg-blue-100 text-blue-800',
     completed: 'bg-green-100 text-green-800',

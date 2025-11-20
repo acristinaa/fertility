@@ -27,7 +27,7 @@ export default function ProgramsPage() {
 
   async function fetchPrograms() {
     try {
-      const userId = 'demo-user-id'
+      const userId = '11111111-1111-1111-1111-111111111008'
 
       const { data } = await supabase
         .from('programs')
@@ -46,10 +46,9 @@ export default function ProgramsPage() {
         .order('created_at', { ascending: false })
 
       setPrograms(
-        (data || []).map((p: any) => ({
+        ((data as Program[]) || []).map((p) : Program => ({
           ...p,
-          provider_name: p.provider?.full_name || null,
-        }))
+        })) as Program[]
       )
     } catch (error) {
       console.error('Error fetching programs:', error)

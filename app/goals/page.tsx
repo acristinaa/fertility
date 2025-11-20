@@ -26,7 +26,7 @@ export default function GoalsPage() {
 
   async function fetchGoals() {
     try {
-      const userId = 'demo-user-id'
+      const userId = '11111111-1111-1111-1111-111111111008'
 
       let query = supabase
         .from('goals')
@@ -49,10 +49,15 @@ export default function GoalsPage() {
       const { data } = await query
 
       setGoals(
-        (data || []).map((g: any) => ({
-          ...g,
-          program_title: g.program?.title || null,
-        }))
+        ((data as Goal[]) || []).map((g) : Goal => ({
+          id: g.id,
+          title: g.title,
+          description: g.description,
+          status: g.status,
+          target_date: g.target_date,
+          created_at: g.created_at,
+          program_title: g.program_title,
+        })) as Goal[]
       )
     } catch (error) {
       console.error('Error fetching goals:', error)
