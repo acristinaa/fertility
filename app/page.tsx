@@ -8,7 +8,7 @@ export default function Home() {
         <nav className="flex justify-between items-center mb-16">
           <div className="flex items-center gap-2">
             <Heart className="text-pink-500" size={32} />
-            <span className="text-2xl font-bold text-gray-900">Fertility Care</span>
+            <span className="text-2xl font-bold text-gray-900">Fertara</span>
           </div>
           <Link
             href="/dashboard"
