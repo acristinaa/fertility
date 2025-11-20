@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Calendar, Target, CheckSquare, TrendingUp } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { PageHeader } from "@/components/layout/page-header";
+import { StatCard } from "@/components/layout/stat-card";
 
 interface DashboardStats {
   upcomingSessions: number;
@@ -22,7 +24,6 @@ interface UpcomingSession {
   provider_name: string | null;
 }
 
-// Add this new type for the raw Supabase response
 type SessionWithProvider = {
   id: number;
   scheduled_at: string;
@@ -46,82 +47,82 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    async function fetchDashboardData() {
+      try {
+        // In a real app, I would get the current user's ID from auth
+        const userId = "11111111-1111-1111-1111-111111111008";
+
+        // Fetch recent sessions (any status) for this client
+        const { data: sessions, error } = await supabase
+          .from("sessions")
+          .select(
+            `
+            id,
+            scheduled_at,
+            provider_id,
+            provider_type,
+            duration_minutes,
+            session_type,
+            provider:profiles!sessions_provider_id_fkey(full_name)
+          `
+          )
+          .eq("client_id", userId)
+          .order("scheduled_at", { ascending: false })
+          .limit(5);
+
+        console.log("DASHBOARD raw sessions from Supabase:", sessions);
+        console.log("DASHBOARD sessions error:", error);
+
+        // Fetch active goals
+        const { count: goalsCount } = await supabase
+          .from("goals")
+          .select("*", { count: "exact", head: true })
+          .eq("client_id", userId)
+          .eq("status", "active");
+
+        // Fetch pending action items
+        const { count: actionItemsCount } = await supabase
+          .from("action_items")
+          .select("*", { count: "exact", head: true })
+          .eq("client_id", userId)
+          .in("status", ["open", "in_progress"]);
+
+        // Fetch completed sessions count
+        const { count: completedCount } = await supabase
+          .from("sessions")
+          .select("*", { count: "exact", head: true })
+          .eq("client_id", userId)
+          .eq("status", "completed");
+
+        setStats({
+          upcomingSessions: sessions?.length || 0,
+          activeGoals: goalsCount || 0,
+          pendingActionItems: actionItemsCount || 0,
+          completedSessions: completedCount || 0,
+        });
+
+        const typedSessions = (sessions ?? []) as SessionWithProvider[];
+
+        setUpcomingSessions(
+          typedSessions.map((s) => ({
+            id: s.id,
+            scheduled_at: s.scheduled_at,
+            provider_id: s.provider_id,
+            provider_type: s.provider_type,
+            duration_minutes: s.duration_minutes,
+            session_type: s.session_type,
+            provider_name: s.provider?.full_name || null,
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     fetchDashboardData();
   }, []);
-
-  async function fetchDashboardData() {
-    try {
-      // In a real app, you would get the current user's ID from auth
-      const userId = "11111111-1111-1111-1111-111111111008";
-
-      // Fetch recent sessions (any status) for this client
-      // Fetch recent sessions (any status) for this client
-      // Fetch recent sessions (any status) for this client
-      const { data: sessions, error } = await supabase
-        .from("sessions")
-        .select(
-          `
-        id,
-        scheduled_at,
-        provider_id,
-        provider_type,
-        duration_minutes,
-        session_type,
-        provider:profiles!sessions_provider_id_fkey(full_name)
-      `
-        )
-        .eq("client_id", userId)
-        .order("scheduled_at", { ascending: false })
-        .limit(5);
-
-      console.log("DASHBOARD raw sessions from Supabase:", sessions);
-      console.log("DASHBOARD sessions error:", error);
-
-      // Fetch active goals
-      const { count: goalsCount } = await supabase
-        .from("goals")
-        .select("*", { count: "exact", head: true })
-        .eq("client_id", userId)
-        .eq("status", "active");
-
-      // Fetch pending action items
-      const { count: actionItemsCount } = await supabase
-        .from("action_items")
-        .select("*", { count: "exact", head: true })
-        .eq("client_id", userId)
-        .in("status", ["open", "in_progress"]);
-
-      // Fetch completed sessions count
-      const { count: completedCount } = await supabase
-        .from("sessions")
-        .select("*", { count: "exact", head: true })
-        .eq("client_id", userId)
-        .eq("status", "completed");
-
-      setStats({
-        upcomingSessions: sessions?.length || 0,
-        activeGoals: goalsCount || 0,
-        pendingActionItems: actionItemsCount || 0,
-        completedSessions: completedCount || 0,
-      });
-
-      setUpcomingSessions(
-        ((sessions as SessionWithProvider[]) || []).map((s) => ({
-          id: s.id,
-          scheduled_at: s.scheduled_at,
-          provider_id: s.provider_id,
-          provider_type: s.provider_type,
-          duration_minutes: s.duration_minutes,
-          session_type: s.session_type,
-          provider_name: s.provider?.full_name || null,
-        }))
-      );
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   if (loading) {
     console.log("DASHBOARD upcomingSessions state:", upcomingSessions);
@@ -136,37 +137,47 @@ export default function DashboardPage() {
 
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-2">
-          Welcome back! Here&apos;s your overview.
-        </p>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Welcome back! Here's your overview."
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
-          icon={<Calendar className="text-blue-600" size={24} />}
-          title="Upcoming Sessions"
+          icon={
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <Calendar className="text-blue-600" size={24} />
+            </div>
+          }
+          label="Upcoming Sessions"
           value={stats.upcomingSessions}
-          bgColor="bg-blue-50"
         />
         <StatCard
-          icon={<Target className="text-green-600" size={24} />}
-          title="Active Goals"
+          icon={
+            <div className="bg-green-50 p-3 rounded-lg">
+              <Target className="text-green-600" size={24} />
+            </div>
+          }
+          label="Active Goals"
           value={stats.activeGoals}
-          bgColor="bg-green-50"
         />
         <StatCard
-          icon={<CheckSquare className="text-purple-600" size={24} />}
-          title="Action Items"
+          icon={
+            <div className="bg-purple-50 p-3 rounded-lg">
+              <CheckSquare className="text-purple-600" size={24} />
+            </div>
+          }
+          label="Action Items"
           value={stats.pendingActionItems}
-          bgColor="bg-purple-50"
         />
         <StatCard
-          icon={<TrendingUp className="text-orange-600" size={24} />}
-          title="Completed Sessions"
+          icon={
+            <div className="bg-orange-50 p-3 rounded-lg">
+              <TrendingUp className="text-orange-600" size={24} />
+            </div>
+          }
+          label="Completed Sessions"
           value={stats.completedSessions}
-          bgColor="bg-orange-50"
         />
       </div>
 
@@ -213,30 +224,6 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-function StatCard({
-  icon,
-  title,
-  value,
-  bgColor,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  value: number;
-  bgColor: string;
-}) {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
-        </div>
-        <div className={`${bgColor} p-3 rounded-lg`}>{icon}</div>
       </div>
     </div>
   );
