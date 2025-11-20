@@ -4,19 +4,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Database } from "@/lib/database.types";
 import { UserCircle, Mail, Phone, MapPin, Globe, Save } from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
 
-interface Profile {
-  id: string;
-  full_name: string | null;
-  email: string | null;
-  phone: string | null;
-  role: "client" | "coach" | "doctor" | "admin";
-  bio: string | null;
-  specialization: string | null;
-  timezone: string;
-  locale: string;
-  avatar_url: string | null;
-}
+type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -24,26 +14,26 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const userId = "11111111-1111-1111-1111-111111111008";
+
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", userId)
+          .single();
+
+        setProfile(data);
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     fetchProfile();
   }, []);
-
-  async function fetchProfile() {
-    try {
-      const userId = "11111111-1111-1111-1111-111111111008";
-
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-
-      setProfile(data);
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function handleSave() {
     if (!profile) return;
@@ -60,9 +50,9 @@ export default function ProfilePage() {
         locale: profile.locale,
       };
 
-      const { error } = await supabase
-        .from("profiles")
-        .update(updateData as never)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from("profiles") as any)
+        .update(updateData)
         .eq("id", profile.id);
 
       if (error) throw error;
@@ -85,10 +75,10 @@ export default function ProfilePage() {
 
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="text-gray-600 mt-2">Manage your personal information</p>
-      </div>
+      <PageHeader
+        title="Profile Settings"
+        subtitle="Manage your personal information"
+      />
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 max-w-3xl">
         <div className="flex items-center gap-6 mb-8 pb-8 border-b border-gray-200">
