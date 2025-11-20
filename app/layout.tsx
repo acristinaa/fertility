@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fertility Care - Client & Provider Portal",
+  title: "Fertara - Client & Provider Portal",
   description: "Comprehensive fertility coaching and medical practice management platform",
 };
 
