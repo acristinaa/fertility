@@ -1,65 +1,83 @@
-import Image from "next/image";
+import Link from 'next/link'
+import { Heart, Calendar, Target, Users } from 'lucide-react'
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="container mx-auto px-4 py-16">
+        <nav className="flex justify-between items-center mb-16">
+          <div className="flex items-center gap-2">
+            <Heart className="text-pink-500" size={32} />
+            <span className="text-2xl font-bold text-gray-900">Fertility Care</span>
+          </div>
+          <Link
+            href="/dashboard"
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Go to Dashboard
+          </Link>
+        </nav>
+
+        <div className="text-center max-w-4xl mx-auto mb-16">
+          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+            Your Fertility Journey,{' '}
+            <span className="text-blue-600">Supported Every Step</span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-xl text-gray-600 mb-8">
+            Connect with coaches and doctors, track your progress, and manage your fertility care
+            all in one comprehensive platform.
           </p>
+          <div className="flex gap-4 justify-center">
+            <Link
+              href="/dashboard"
+              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-lg font-medium"
+            >
+              Get Started
+            </Link>
+            <button className="px-8 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 transition-colors text-lg font-medium">
+              Learn More
+            </button>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <FeatureCard
+            icon={<Calendar className="text-blue-600" size={32} />}
+            title="Session Management"
+            description="Schedule and manage sessions with your coaches and doctors seamlessly"
+          />
+          <FeatureCard
+            icon={<Target className="text-green-600" size={32} />}
+            title="Goal Tracking"
+            description="Set, monitor, and achieve your fertility goals with expert guidance"
+          />
+          <FeatureCard
+            icon={<Users className="text-purple-600" size={32} />}
+            title="Provider Network"
+            description="Connect with specialized coaches and medical professionals"
+          />
         </div>
-      </main>
+      </div>
     </div>
-  );
+  )
+}
+
+function FeatureCard({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode
+  title: string
+  description: string
+}) {
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+      <div className="bg-gray-50 w-16 h-16 rounded-lg flex items-center justify-center mb-4">
+        {icon}
+      </div>
+      <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>
+      <p className="text-gray-600">{description}</p>
+    </div>
+  )
 }
