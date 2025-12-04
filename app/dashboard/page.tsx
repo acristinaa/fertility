@@ -6,6 +6,14 @@ import { Calendar, Target, CheckSquare, TrendingUp } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/layout/stat-card";
+import {
+  transformSessionData,
+  fetchActiveGoalsCount,
+  fetchPendingActionItemsCount,
+  fetchCompletedSessionsCount,
+  type SessionWithProvider,
+  type UpcomingSession,
+} from "@/lib/dashboard-utils";
 
 interface DashboardStats {
   upcomingSessions: number;
@@ -14,88 +22,8 @@ interface DashboardStats {
   completedSessions: number;
 }
 
-interface UpcomingSession {
-  id: number;
-  scheduled_at: string;
-  provider_id: string;
-  provider_type: string;
-  duration_minutes: number;
-  session_type: string;
-  provider_name: string | null;
-}
-
-type SessionWithProvider = {
-  id: number;
-  scheduled_at: string;
-  provider_id: string;
-  provider_type: string;
-  duration_minutes: number;
-  session_type: string;
-  provider: { full_name: string } | null;
-};
-
 // TODO: Replace with actual authenticated user ID from Supabase Auth
 const DEMO_USER_ID = "11111111-1111-1111-1111-111111111008";
-
-/**
- * Transforms raw session data from database to UI-friendly format
- * Separates data transformation from data fetching (SRP)
- */
-function transformSessionData(
-  sessions: SessionWithProvider[]
-): UpcomingSession[] {
-  return sessions.map((session) => ({
-    id: session.id,
-    scheduled_at: session.scheduled_at,
-    provider_id: session.provider_id,
-    provider_type: session.provider_type,
-    duration_minutes: session.duration_minutes,
-    session_type: session.session_type,
-    provider_name: session.provider?.full_name || null,
-  }));
-}
-
-/**
- * Fetches count of active goals for a client
- * Single purpose: retrieve active goals count
- */
-async function fetchActiveGoalsCount(userId: string): Promise<number> {
-  const { count } = await supabase
-    .from("goals")
-    .select("*", { count: "exact", head: true })
-    .eq("client_id", userId)
-    .eq("status", "active");
-
-  return count || 0;
-}
-
-/**
- * Fetches count of pending action items for a client
- * Single purpose: retrieve pending action items count
- */
-async function fetchPendingActionItemsCount(userId: string): Promise<number> {
-  const { count } = await supabase
-    .from("action_items")
-    .select("*", { count: "exact", head: true })
-    .eq("client_id", userId)
-    .in("status", ["open", "in_progress"]);
-
-  return count || 0;
-}
-
-/**
- * Fetches count of completed sessions for a client
- * Single purpose: retrieve completed sessions count
- */
-async function fetchCompletedSessionsCount(userId: string): Promise<number> {
-  const { count } = await supabase
-    .from("sessions")
-    .select("*", { count: "exact", head: true })
-    .eq("client_id", userId)
-    .eq("status", "completed");
-
-  return count || 0;
-}
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
