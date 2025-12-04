@@ -55,7 +55,7 @@ export default function DashboardPage() {
         const userId = DEMO_USER_ID;
 
         // Fetch recent sessions (any status) for this client
-        const { data: sessions, error } = await supabase
+        const { data: sessions } = await supabase
           .from("sessions")
           .select(
             `
@@ -71,9 +71,6 @@ export default function DashboardPage() {
           .eq("client_id", userId)
           .order("scheduled_at", { ascending: false })
           .limit(5);
-
-        console.log("DASHBOARD raw sessions from Supabase:", sessions);
-        console.log("DASHBOARD sessions error:", error);
 
         // Fetch active goals
         const { count: goalsCount } = await supabase
@@ -129,7 +126,6 @@ export default function DashboardPage() {
   }, []);
 
   if (loading) {
-    console.log("DASHBOARD upcomingSessions state:", upcomingSessions);
     return (
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
