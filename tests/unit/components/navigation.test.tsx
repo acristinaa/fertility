@@ -1,14 +1,15 @@
 import { render, screen } from "@testing-library/react";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 import { Navigation } from "@/components/navigation";
 
 // Mock usePathname to control active state
-jest.mock("next/navigation", () => ({
-  usePathname: jest.fn(),
+vi.mock("next/navigation", () => ({
+  usePathname: vi.fn(),
 }));
 
 import { usePathname } from "next/navigation";
 
-const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
+const mockUsePathname = usePathname as ReturnType<typeof vi.fn>;
 
 describe("Navigation", () => {
   beforeEach(() => {
@@ -80,10 +81,15 @@ describe("Navigation", () => {
       (role) => {
         render(<Navigation role={role} />);
 
+        // Use regex to match text with any whitespace/case since CSS handles capitalization
         expect(
-          screen.getByText(
-            `${role.charAt(0).toUpperCase() + role.slice(1)} Portal`
-          )
+          screen.getByText((content, element) => {
+            return (
+              element?.tagName.toLowerCase() === "p" &&
+              content.toLowerCase().includes(role) &&
+              content.toLowerCase().includes("portal")
+            );
+          })
         ).toBeInTheDocument();
       }
     );

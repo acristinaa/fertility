@@ -7,6 +7,7 @@ describe("DashboardPage Integration", () => {
     resetSupabaseMock();
   });
 
+
   function setupDashboardMock({
     sessions = [],
     goalsCount = 0,
@@ -121,7 +122,8 @@ describe("DashboardPage Integration", () => {
       ).not.toBeInTheDocument();
     });
 
-    expect(screen.getByText("Upcoming Sessions")).toBeInTheDocument();
+    // Use getAllByText since "Upcoming Sessions" appears in both stat card and section header
+    expect(screen.getAllByText("Upcoming Sessions").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Active Goals")).toBeInTheDocument();
     expect(screen.getByText("Action Items")).toBeInTheDocument();
     expect(screen.getByText("Completed Sessions")).toBeInTheDocument();

@@ -1,18 +1,20 @@
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
+import { vi } from "vitest";
+import { mockSupabaseClient } from "./mocks/supabase";
+
+// Mock Supabase using our shared mock client
+vi.mock("@/lib/supabase", () => ({
+  supabase: mockSupabaseClient,
+}));
 
 // Mock Next.js router
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-    prefetch: jest.fn(),
-    back: jest.fn(),
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
   }),
   usePathname: () => "/dashboard",
   useSearchParams: () => new URLSearchParams(),
 }));
-
-// Reset all mocks between tests
-beforeEach(() => {
-  jest.clearAllMocks();
-});

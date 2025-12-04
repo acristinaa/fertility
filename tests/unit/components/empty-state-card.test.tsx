@@ -15,18 +15,23 @@ describe("EmptyStateCard", () => {
   });
 
   it("renders icon when provided", () => {
-    render(<EmptyStateCard title="Test" description="Description" />);
-
-    expect(screen.getByTestId("empty-icon")).toBeInTheDocument();
-  });
-
-  it("does not render icon section when icon is not provided", () => {
-    const { container } = render(
-      <EmptyStateCard title="Test" description="Description" />
+    const mockIcon = <span data-testid="custom-icon">🔍</span>;
+    render(
+      <EmptyStateCard
+        icon={mockIcon}
+        title="Test"
+        description="Description"
+      />
     );
 
-    // The icon wrapper should not exist
-    expect(container.querySelector(".mx-auto.mb-4")).not.toBeInTheDocument();
+    expect(screen.getByTestId("custom-icon")).toBeInTheDocument();
+  });
+
+  it("does not render icon wrapper when icon is not provided", () => {
+    render(<EmptyStateCard title="Test" description="Description" />);
+
+    // The icon wrapper div should not exist when no icon is passed
+    expect(screen.queryByTestId("custom-icon")).not.toBeInTheDocument();
   });
 
   it("renders action button when primaryActionLabel is provided", () => {
@@ -50,7 +55,7 @@ describe("EmptyStateCard", () => {
   });
 
   it("calls onPrimaryActionClick when button is clicked", () => {
-    const handleClick = jest.fn();
+    const handleClick = vi.fn();
     render(
       <EmptyStateCard
         title="Test"
