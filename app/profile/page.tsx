@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
 import { Database } from "@/lib/database.types";
 import { UserCircle, Mail, Phone, MapPin, Globe, Save } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -9,31 +10,17 @@ import { PageHeader } from "@/components/layout/page-header";
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 export default function ProfilePage() {
+  const { profile: authProfile, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    async function fetchProfile() {
-      try {
-        const userId = "11111111-1111-1111-1111-111111111008";
-
-        const { data } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", userId)
-          .single();
-
-        setProfile(data);
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-      } finally {
-        setLoading(false);
-      }
+    if (!authLoading) {
+      setProfile(authProfile);
+      setLoading(false);
     }
-
-    fetchProfile();
-  }, []);
+  }, [authProfile, authLoading]);
 
   async function handleSave() {
     if (!profile) return;
@@ -70,7 +57,11 @@ export default function ProfilePage() {
   }
 
   if (!profile) {
-    return <div className="text-center py-8">Profile not found.</div>;
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-600 mb-4">No profile found. Please sign in.</p>
+      </div>
+    );
   }
 
   return (
@@ -109,7 +100,7 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <Mail size={16} />
               Email
             </label>
@@ -124,7 +115,7 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <Phone size={16} />
               Phone
             </label>
@@ -170,7 +161,7 @@ export default function ProfilePage() {
 
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 <MapPin size={16} />
                 Timezone
               </label>
@@ -191,7 +182,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 <Globe size={16} />
                 Language
               </label>

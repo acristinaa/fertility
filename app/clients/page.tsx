@@ -28,8 +28,32 @@ export default function ClientsPage() {
   useEffect(() => {
     async function fetchClients() {
       try {
-        const providerId = "demo-provider-id";
-        const providerType = "coach";
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          setClients([]);
+          setLoading(false);
+          return;
+        }
+
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        type ProfileRole = { role: string };
+        const typedProfile = profileData as ProfileRole | null;
+
+        if (!typedProfile || (typedProfile.role !== "coach" && typedProfile.role !== "doctor")) {
+          setClients([]);
+          setLoading(false);
+          return;
+        }
+
+        const providerId = user.id;
+        const providerType = typedProfile.role as "coach" | "doctor";
 
         const linkTable =
           providerType === "coach"

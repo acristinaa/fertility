@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
 import { CheckSquare, Plus, AlertCircle } from "lucide-react";
 import { parseISO, isPast } from "date-fns";
 import { PageHeader } from "@/components/layout/page-header";
@@ -23,6 +24,7 @@ type RawActionItemRow = {
 };
 
 export default function ActionItemsPage() {
+  const { user } = useAuth();
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [, setLoading] = useState(true);
   const [filter, setFilter] = useState<
@@ -31,9 +33,12 @@ export default function ActionItemsPage() {
 
   useEffect(() => {
     async function fetchActionItems() {
-      try {
-        const userId = "11111111-1111-1111-1111-111111111008";
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
+      try {
         let query = supabase
           .from("action_items")
           .select(
@@ -48,7 +53,7 @@ export default function ActionItemsPage() {
             goal:goals(title)
           `
           )
-          .eq("client_id", userId)
+          .eq("client_id", user.id)
           .order("due_date", { ascending: true, nullsFirst: false });
 
         if (filter !== "all") {
@@ -80,7 +85,7 @@ export default function ActionItemsPage() {
     }
 
     fetchActionItems();
-  }, [filter]);
+  }, [filter, user]);
 
   const pendingCount = actionItems.filter(
     (a) => a.status === "open" || a.status === "in_progress"

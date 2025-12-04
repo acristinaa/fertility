@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
 import { Target, Plus, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/layout/stat-card";
@@ -21,6 +22,7 @@ type RawGoalRow = {
 };
 
 export default function GoalsPage() {
+  const { user } = useAuth();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<
@@ -29,9 +31,12 @@ export default function GoalsPage() {
 
   useEffect(() => {
     async function fetchGoals() {
-      try {
-        const userId = "11111111-1111-1111-1111-111111111008";
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
+      try {
         let query = supabase
           .from("goals")
           .select(
@@ -45,7 +50,7 @@ export default function GoalsPage() {
             program:programs(title)
           `
           )
-          .eq("client_id", userId)
+          .eq("client_id", user.id)
           .order("created_at", { ascending: false });
 
         if (filter !== "all") {
@@ -76,7 +81,7 @@ export default function GoalsPage() {
     }
 
     fetchGoals();
-  }, [filter]);
+  }, [filter, user]);
 
   if (loading) {
     return (

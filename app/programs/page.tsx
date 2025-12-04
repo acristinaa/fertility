@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
 import { FileText, Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyStateCard } from "@/components/common/empty-state-card";
@@ -21,14 +22,18 @@ type RawProgramRow = {
 };
 
 export default function ProgramsPage() {
+  const { user } = useAuth();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchPrograms() {
-      try {
-        const userId = "11111111-1111-1111-1111-111111111008";
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
+      try {
         const { data } = await supabase
           .from("programs")
           .select(
@@ -44,7 +49,7 @@ export default function ProgramsPage() {
             provider:profiles!programs_provider_id_fkey(full_name)
           `
           )
-          .eq("client_id", userId)
+          .eq("client_id", user.id)
           .order("created_at", { ascending: false });
 
         const rows = (data ?? []) as RawProgramRow[];
@@ -72,7 +77,7 @@ export default function ProgramsPage() {
     }
 
     fetchPrograms();
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (

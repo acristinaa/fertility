@@ -3,19 +3,27 @@ import { Heart, Calendar, Target, Users } from 'lucide-react'
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50">
       <div className="container mx-auto px-4 py-16">
         <nav className="flex justify-between items-center mb-16">
           <div className="flex items-center gap-2">
             <Heart className="text-pink-500" size={32} />
             <span className="text-2xl font-bold text-gray-900">Fertara</span>
           </div>
-          <Link
-            href="/dashboard"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Go to Dashboard
-          </Link>
+          <div className="flex gap-3">
+            <Link
+              href="/login"
+              className="px-6 py-2 border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/dashboard"
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Dashboard
+            </Link>
+          </div>
         </nav>
 
         <div className="text-center max-w-4xl mx-auto mb-16">
@@ -29,14 +37,17 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center">
             <Link
-              href="/dashboard"
+              href="/login"
               className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-lg font-medium"
             >
               Get Started
             </Link>
-            <button className="px-8 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 transition-colors text-lg font-medium">
-              Learn More
-            </button>
+            <Link
+              href="/dashboard"
+              className="px-8 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 transition-colors text-lg font-medium"
+            >
+              View Dashboard
+            </Link>
           </div>
         </div>
 
