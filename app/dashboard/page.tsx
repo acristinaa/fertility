@@ -55,6 +55,48 @@ function transformSessionData(
   }));
 }
 
+/**
+ * Fetches count of active goals for a client
+ * Single purpose: retrieve active goals count
+ */
+async function fetchActiveGoalsCount(userId: string): Promise<number> {
+  const { count } = await supabase
+    .from("goals")
+    .select("*", { count: "exact", head: true })
+    .eq("client_id", userId)
+    .eq("status", "active");
+
+  return count || 0;
+}
+
+/**
+ * Fetches count of pending action items for a client
+ * Single purpose: retrieve pending action items count
+ */
+async function fetchPendingActionItemsCount(userId: string): Promise<number> {
+  const { count } = await supabase
+    .from("action_items")
+    .select("*", { count: "exact", head: true })
+    .eq("client_id", userId)
+    .in("status", ["open", "in_progress"]);
+
+  return count || 0;
+}
+
+/**
+ * Fetches count of completed sessions for a client
+ * Single purpose: retrieve completed sessions count
+ */
+async function fetchCompletedSessionsCount(userId: string): Promise<number> {
+  const { count } = await supabase
+    .from("sessions")
+    .select("*", { count: "exact", head: true })
+    .eq("client_id", userId)
+    .eq("status", "completed");
+
+  return count || 0;
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
     upcomingSessions: 0,
@@ -72,11 +114,14 @@ export default function DashboardPage() {
       try {
         const userId = DEMO_USER_ID;
 
-        // Fetch recent sessions (any status) for this client
-        const { data: sessions } = await supabase
-          .from("sessions")
-          .select(
-            `
+        // Fetch all dashboard data concurrently for better performance
+        const [sessions, goalsCount, actionItemsCount, completedCount] =
+          await Promise.all([
+            // Fetch recent sessions with provider details
+            supabase
+              .from("sessions")
+              .select(
+                `
             id,
             scheduled_at,
             provider_id,
@@ -85,39 +130,21 @@ export default function DashboardPage() {
             session_type,
             provider:profiles!sessions_provider_id_fkey(full_name)
           `
-          )
-          .eq("client_id", userId)
-          .order("scheduled_at", { ascending: false })
-          .limit(5);
-
-        // Fetch active goals
-        const { count: goalsCount } = await supabase
-          .from("goals")
-          .select("*", { count: "exact", head: true })
-          .eq("client_id", userId)
-          .eq("status", "active");
-
-        // Fetch pending action items
-        const { count: actionItemsCount } = await supabase
-          .from("action_items")
-          .select("*", { count: "exact", head: true })
-          .eq("client_id", userId)
-          .in("status", ["open", "in_progress"]);
-
-        // Fetch completed sessions count
-        const { count: completedCount } = await supabase
-          .from("sessions")
-          .select("*", { count: "exact", head: true })
-          .eq("client_id", userId)
-          .eq("status", "completed");
-
-        
+              )
+              .eq("client_id", userId)
+              .order("scheduled_at", { ascending: false })
+              .limit(5)
+              .then(({ data }) => data),
+            fetchActiveGoalsCount(userId),
+            fetchPendingActionItemsCount(userId),
+            fetchCompletedSessionsCount(userId),
+          ]);
 
         setStats({
           upcomingSessions: sessions?.length || 0,
-          activeGoals: goalsCount || 0,
-          pendingActionItems: actionItemsCount || 0,
-          completedSessions: completedCount || 0,
+          activeGoals: goalsCount,
+          pendingActionItems: actionItemsCount,
+          completedSessions: completedCount,
         });
 
         const typedSessions = (sessions ?? []) as SessionWithProvider[];
