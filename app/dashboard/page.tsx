@@ -34,6 +34,9 @@ type SessionWithProvider = {
   provider: { full_name: string } | null;
 };
 
+// TODO: Replace with actual authenticated user ID from Supabase Auth
+const DEMO_USER_ID = "11111111-1111-1111-1111-111111111008";
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
     upcomingSessions: 0,
@@ -49,8 +52,7 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        // In a real app, I would get the current user's ID from auth
-        const userId = "11111111-1111-1111-1111-111111111008";
+        const userId = DEMO_USER_ID;
 
         // Fetch recent sessions (any status) for this client
         const { data: sessions, error } = await supabase
@@ -93,6 +95,8 @@ export default function DashboardPage() {
           .select("*", { count: "exact", head: true })
           .eq("client_id", userId)
           .eq("status", "completed");
+
+        
 
         setStats({
           upcomingSessions: sessions?.length || 0,
