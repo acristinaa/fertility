@@ -291,6 +291,94 @@ GROUP BY c.id, c.full_name
 ORDER BY c.full_name;
 
 
+## Testing
+
+This project includes comprehensive automated testing at three levels:
+
+### Unit Tests
+```bash
+npm test                    # Run unit tests
+npm run test:watch         # Run in watch mode
+npm run test:coverage      # Generate coverage report
+```
+
+Unit tests cover:
+- Individual components (StatCard, SessionCard, ClientCard, etc.)
+- Utility functions (session helpers, dashboard utils)
+- Component behavior and props
+
+### Integration Tests
+```bash
+npm test                    # Includes integration tests
+```
+
+Integration tests verify:
+- Dashboard page with mocked Supabase data
+- Client list functionality
+- Session management flows
+
+### End-to-End Tests
+```bash
+npm run test:e2e           # Run E2E tests (headless)
+npm run test:e2e:ui        # Run with Playwright UI
+```
+
+E2E tests validate:
+- Complete user workflows
+- Navigation between pages
+- Real browser interactions
+
+**Test Results:** 72 tests passing (10 test files)
+
+## Code Analysis Tools
+
+This project uses several tools to maintain code quality:
+
+### TypeScript
+- **Purpose:** Static type checking and better IDE support
+- **Config:** `tsconfig.json`
+- **Usage:** `npx tsc --noEmit`
+- **Benefits:** Catches type errors before runtime
+
+### ESLint
+- **Purpose:** Code quality and style consistency
+- **Config:** `eslint.config.js` (ESLint 9 flat config)
+- **Usage:** `npm run lint`
+- **Rules:** Next.js recommended config with React best practices
+
+### Benefits of Code Analysis:
+- Prevents common bugs (unused variables, type mismatches)
+- Ensures consistent code style across the project
+- Improves code maintainability
+- Provides better developer experience with autocomplete
+
+## Clean Code Principles
+
+This project demonstrates clean code principles and refactoring techniques. See [CLEAN_CODE.md](CLEAN_CODE.md) for detailed documentation of:
+
+- **Refactoring Workflow:** Step-by-step refactoring with atomic commits
+- **Code Smells:** Identified issues and how they were resolved
+- **Clean Code Principles:** SRP, DRY, YAGNI, good naming, etc.
+- **Testing Strategy:** How tests support refactoring
+- **Before/After Comparisons:** Evidence of code quality improvements
+
+### Key Refactorings
+
+The dashboard page ([app/dashboard/page.tsx](app/dashboard/page.tsx)) underwent systematic refactoring:
+
+1. ✅ Extracted magic constants to named variables
+2. ✅ Removed debug code (console.logs)
+3. ✅ Extracted transformation logic to pure functions
+4. ✅ Separated data fetching into focused functions
+5. ✅ Created utility module for reusable logic ([lib/dashboard-utils.ts](lib/dashboard-utils.ts))
+
+All refactoring was done with:
+- Atomic commits (one change per commit)
+- Tests running before and after each change
+- Descriptive commit messages explaining the "why"
+
+**Result:** 233-line file reduced to 161 lines in component + 92-line reusable utils module
+
 ## Build for Production
 
 ```bash
