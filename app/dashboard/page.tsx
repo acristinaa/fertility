@@ -37,6 +37,24 @@ type SessionWithProvider = {
 // TODO: Replace with actual authenticated user ID from Supabase Auth
 const DEMO_USER_ID = "11111111-1111-1111-1111-111111111008";
 
+/**
+ * Transforms raw session data from database to UI-friendly format
+ * Separates data transformation from data fetching (SRP)
+ */
+function transformSessionData(
+  sessions: SessionWithProvider[]
+): UpcomingSession[] {
+  return sessions.map((session) => ({
+    id: session.id,
+    scheduled_at: session.scheduled_at,
+    provider_id: session.provider_id,
+    provider_type: session.provider_type,
+    duration_minutes: session.duration_minutes,
+    session_type: session.session_type,
+    provider_name: session.provider?.full_name || null,
+  }));
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
     upcomingSessions: 0,
@@ -103,18 +121,7 @@ export default function DashboardPage() {
         });
 
         const typedSessions = (sessions ?? []) as SessionWithProvider[];
-
-        setUpcomingSessions(
-          typedSessions.map((s) => ({
-            id: s.id,
-            scheduled_at: s.scheduled_at,
-            provider_id: s.provider_id,
-            provider_type: s.provider_type,
-            duration_minutes: s.duration_minutes,
-            session_type: s.session_type,
-            provider_name: s.provider?.full_name || null,
-          }))
-        );
+        setUpcomingSessions(transformSessionData(typedSessions));
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
