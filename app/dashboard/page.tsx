@@ -6,6 +6,14 @@ import { Calendar, Target, CheckSquare, TrendingUp } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/layout/stat-card";
+import {
+  transformSessionData,
+  fetchActiveGoalsCount,
+  fetchPendingActionItemsCount,
+  fetchCompletedSessionsCount,
+  type SessionWithProvider,
+  type UpcomingSession,
+} from "@/lib/dashboard-utils";
 
 interface DashboardStats {
   upcomingSessions: number;
@@ -14,25 +22,8 @@ interface DashboardStats {
   completedSessions: number;
 }
 
-interface UpcomingSession {
-  id: number;
-  scheduled_at: string;
-  provider_id: string;
-  provider_type: string;
-  duration_minutes: number;
-  session_type: string;
-  provider_name: string | null;
-}
-
-type SessionWithProvider = {
-  id: number;
-  scheduled_at: string;
-  provider_id: string;
-  provider_type: string;
-  duration_minutes: number;
-  session_type: string;
-  provider: { full_name: string } | null;
-};
+// TODO: Replace with actual authenticated user ID from Supabase Auth
+const DEMO_USER_ID = "11111111-1111-1111-1111-111111111008";
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
@@ -49,14 +40,16 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        // In a real app, I would get the current user's ID from auth
-        const userId = "11111111-1111-1111-1111-111111111008";
+        const userId = DEMO_USER_ID;
 
-        // Fetch recent sessions (any status) for this client
-        const { data: sessions, error } = await supabase
-          .from("sessions")
-          .select(
-            `
+        // Fetch all dashboard data concurrently for better performance
+        const [sessions, goalsCount, actionItemsCount, completedCount] =
+          await Promise.all([
+            // Fetch recent sessions with provider details
+            supabase
+              .from("sessions")
+              .select(
+                `
             id,
             scheduled_at,
             provider_id,
@@ -65,55 +58,25 @@ export default function DashboardPage() {
             session_type,
             provider:profiles!sessions_provider_id_fkey(full_name)
           `
-          )
-          .eq("client_id", userId)
-          .order("scheduled_at", { ascending: false })
-          .limit(5);
-
-        console.log("DASHBOARD raw sessions from Supabase:", sessions);
-        console.log("DASHBOARD sessions error:", error);
-
-        // Fetch active goals
-        const { count: goalsCount } = await supabase
-          .from("goals")
-          .select("*", { count: "exact", head: true })
-          .eq("client_id", userId)
-          .eq("status", "active");
-
-        // Fetch pending action items
-        const { count: actionItemsCount } = await supabase
-          .from("action_items")
-          .select("*", { count: "exact", head: true })
-          .eq("client_id", userId)
-          .in("status", ["open", "in_progress"]);
-
-        // Fetch completed sessions count
-        const { count: completedCount } = await supabase
-          .from("sessions")
-          .select("*", { count: "exact", head: true })
-          .eq("client_id", userId)
-          .eq("status", "completed");
+              )
+              .eq("client_id", userId)
+              .order("scheduled_at", { ascending: false })
+              .limit(5)
+              .then(({ data }) => data),
+            fetchActiveGoalsCount(userId),
+            fetchPendingActionItemsCount(userId),
+            fetchCompletedSessionsCount(userId),
+          ]);
 
         setStats({
           upcomingSessions: sessions?.length || 0,
-          activeGoals: goalsCount || 0,
-          pendingActionItems: actionItemsCount || 0,
-          completedSessions: completedCount || 0,
+          activeGoals: goalsCount,
+          pendingActionItems: actionItemsCount,
+          completedSessions: completedCount,
         });
 
         const typedSessions = (sessions ?? []) as SessionWithProvider[];
-
-        setUpcomingSessions(
-          typedSessions.map((s) => ({
-            id: s.id,
-            scheduled_at: s.scheduled_at,
-            provider_id: s.provider_id,
-            provider_type: s.provider_type,
-            duration_minutes: s.duration_minutes,
-            session_type: s.session_type,
-            provider_name: s.provider?.full_name || null,
-          }))
-        );
+        setUpcomingSessions(transformSessionData(typedSessions));
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -125,7 +88,6 @@ export default function DashboardPage() {
   }, []);
 
   if (loading) {
-    console.log("DASHBOARD upcomingSessions state:", upcomingSessions);
     return (
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
