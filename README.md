@@ -156,14 +156,30 @@ fertility/
 │   ├── clients/         # Client list for providers
 │   ├── dashboard/       # Main dashboard
 │   ├── goals/           # Goals tracking
+│   ├── login/           # Authentication page
 │   ├── profile/         # User profile settings
 │   ├── programs/        # Programs management
 │   ├── sessions/        # Session scheduling and viewing
-│   ├── layout.tsx       # Root layout
+│   ├── setup-profile/   # First-time profile setup
+│   ├── layout.tsx       # Root layout with AuthProvider
 │   └── page.tsx         # Landing page
 ├── components/
+│   ├── action-items/    # Action item components
+│   ├── clients/         # Client components
+│   ├── common/          # Shared components
+│   ├── goals/           # Goal components
+│   ├── layout/          # Layout components
+│   ├── programs/        # Program components
+│   ├── sessions/        # Session components
+│   ├── ui/              # UI primitives
 │   └── navigation.tsx   # Sidebar navigation component
+├── db/
+│   ├── functions.sql    # Database functions
+│   ├── schema.sql       # Database schema
+│   ├── seed.sql         # Seed data
+│   └── fix-policies.sql # RLS policy fixes
 ├── lib/
+│   ├── auth-context.tsx # Authentication context provider
 │   ├── database.types.ts # TypeScript types for database
 │   └── supabase.ts      # Supabase client configuration
 └── public/              # Static assets
@@ -172,6 +188,8 @@ fertility/
 ## Key Pages
 
 - `/` - Landing page with feature overview
+- `/login` - User authentication page
+- `/setup-profile` - First-time profile creation (auto-redirected)
 - `/dashboard` - Role-specific dashboard with stats and upcoming sessions
 - `/sessions` - View and manage all sessions
 - `/programs` - Manage fertility programs
@@ -182,46 +200,104 @@ fertility/
 
 ## Authentication
 
-This demo currently uses placeholder user IDs. To implement authentication:
+The application uses Supabase Authentication with email/password login.
 
-1. Set up Supabase Auth in your project
-2. Replace `demo-user-id` and `demo-provider-id` with actual authenticated user IDs
-3. Use `supabase.auth.getUser()` to get the current user
-4. Implement RLS policies to secure data access
+### Setup Authentication
+
+1. **Enable Email Auth in Supabase**:
+   - Go to Authentication > Providers in your Supabase dashboard
+   - Enable Email provider
+
+2. **Create User Accounts**:
+   - Navigate to Authentication > Users
+   - Click "Add user" to create test accounts
+   - Note the UUID of each user created
+
+3. **Create Profile for Each User**:
+   - Go to Table Editor > profiles
+   - Insert a row for each auth user with:
+     - `id`: The UUID from the auth user
+     - `role`: One of `client`, `coach`, `doctor`, or `admin`
+     - `full_name`: User's display name
+     - `email`: Same as auth email
+
+4. **Sign In**:
+   - Visit `/login` in your app
+   - Use the email/password you created
+   - First-time users without profiles will be redirected to `/setup-profile`
+
+### Authentication Context
+
+The app uses a React Context (`lib/auth-context.tsx`) that:
+- Manages authentication state globally
+- Automatically fetches user profile from the database
+- Provides `useAuth()` hook for accessing current user and profile
+- Handles sign-in, sign-out, and session management
 
 ## Database Security
 
-Recommended RLS policies:
+The application implements Row Level Security (RLS) policies to ensure data access control.
+
+### Setting Up RLS Policies
+
+**IMPORTANT**: The RLS policies must avoid infinite recursion. Run the SQL scripts in `db/` directory:
+
+1. **Fix Profile Policies** (`db/fix-policies.sql`):
+   - Creates a `is_admin()` helper function to avoid recursion
+   - Sets up secure policies for the `profiles` table
+   - Allows users to view/update their own profile
+   - Allows admins to manage all profiles
+
+2. **Complete Policy Setup** (if `db/fix-all-policies.sql` exists):
+   - Extends policies to `programs`, `goals`, `action_items`, and `sessions`
+   - Ensures clients can only access their own data
+   - Allows providers to access data for their linked clients
+   - Gives admins full access
+
+### Example Policies
 
 ```sql
--- Example: Clients can only view their own data
+-- Users can view their own profile
 CREATE POLICY "Users can view own profile"
   ON profiles FOR SELECT
   USING (auth.uid() = id);
 
--- Example: Providers can view linked clients
-CREATE POLICY "Providers can view linked clients"
-  ON profiles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM client_coach_links
-      WHERE client_id = profiles.id
-        AND coach_id = auth.uid()
-        AND status = 'active'
-    )
+-- Helper function to check admin status (avoids recursion)
+CREATE FUNCTION is_admin() RETURNS boolean AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM profiles
+    WHERE id = auth.uid() AND role = 'admin'
   );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- Clients can view their own programs
+CREATE POLICY "Clients can view own programs"
+  ON programs FOR SELECT
+  USING (client_id = auth.uid());
+
+-- Providers can view programs they manage
+CREATE POLICY "Providers can view managed programs"
+  ON programs FOR SELECT
+  USING (provider_id = auth.uid());
 ```
+
+### Common RLS Issues
+
+**Infinite Recursion Error**: If you see `infinite recursion detected in policy` errors:
+- This happens when policies query the same table they're protecting
+- Solution: Use `SECURITY DEFINER` functions or check `auth.uid()` directly
+- See `db/fix-policies.sql` for the fix
 
 ## Customization
 
-### Changing User Role
+### Testing Different User Roles
 
-To test different user roles, update the `userRole` constant in the layout files:
+User roles are determined by the `role` field in the `profiles` table. To test different roles:
 
-```typescript
-// In app/dashboard/layout.tsx, app/sessions/layout.tsx, etc.
-const userRole = 'coach' as 'client' | 'coach' | 'doctor' | 'admin'
-```
+1. Create multiple auth users in Supabase
+2. Create profiles with different roles (`client`, `coach`, `doctor`, `admin`)
+3. Sign in with different accounts to see role-specific views
+4. The navigation automatically adapts based on the user's role
 
 ### Adding New Features
 
